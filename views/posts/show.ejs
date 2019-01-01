@@ -1,0 +1,33 @@
+<h1><%= post.title %></h1>
+<div class="">
+  Price: <%= post.price %>
+</div>
+<div class="">
+  Description: <%= post.description %>
+</div>
+<div class="">
+  Location: <%= post.location %>
+</div>
+<div class="">
+  <% post.images.forEach(function(image) { %>
+    <img src="<%= image.url %>" alt="Surf Board Images" width="200px">
+  <% }); %>
+</div>
+<div class="">
+  <a href="/posts/<%= post.id %>/edit">
+    <button>Edit</button>
+  </a>
+</div>
+<div class="">
+  <form class="" action="/posts/<%= post.id %>?_method=DELETE" method="POST">
+    <button>Delete</button>
+  </form>
+</div>
+
+<!-- title: String, -->
+<!-- price: String, -->
+<!-- description: String, -->
+<!-- images: [ String ], -->
+<!-- location: String, -->
+<!-- lat: Number, -->
+<!-- lng: Number, -->
