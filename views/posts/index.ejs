@@ -1,7 +1,12 @@
+<% layout('layouts/boilerplate') -%>
 <h1>Posts Index!</h1>
 
+<div id="map"></div>
+
+<% include ../partials/paginatePosts %>
+
+<% posts.docs.forEach(function(post) { %>
 <div class="">
-  <% posts.forEach(function(post) { %>
   <h2><%= post.title %></h2>
   <div class="">
     Price: <%= post.price %>
@@ -13,5 +18,13 @@
     Location: <%= post.location %>
   </div>
   <div class=""><a href="/posts/<%= post.id %>">View More</a></div>
-  <% }) %>
 </div>
+<% }) %>
+
+<% include ../partials/paginatePosts %>
+
+<script type="text/javascript">
+  mapboxgl.accessToken = "<%= mapBoxPublicToken %>";
+  var posts = {features: <%- JSON.stringify(posts.docs) %>};
+</script>
+<script src="/javascripts/allPostsClusterMap.js" type="text/javascript"></script>

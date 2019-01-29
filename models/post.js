@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const Review = require('./review');
+const mongoosePaginate = require('mongoose-paginate');
 
 const postSchema = new Schema({
   title: String,
@@ -7,8 +9,20 @@ const postSchema = new Schema({
   description: String,
   images: [ {url: String, public_id: String} ],
   location: String,
-  lat: Number,
-  lng: Number,
+  geometry: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: true
+    },
+    coordinates: {
+      type: [Number],
+      required: true
+    }
+  },
+  properties: {
+    description: String
+  },
   author: {
     type: Schema.Types.ObjectId,
     ref: 'User'
@@ -18,20 +32,33 @@ const postSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'Review'
     }
-  ]
+  ],
+  avgRating: { type: Number, default: 0}
 });
 
-module.exports = mongoose.model('Post', postSchema);
+postSchema.pre('remove', async function() {
+  await Review.remove({
+    _id: {
+      $in: this.reviews
+    }
+  });
+});
 
-/*
-##Post##
-- title - string
-- price - string
-- description - string
-- images - array of strings
-- location - string
-- lat - number
-- lng - number
-- author - object id (ref User)
-- reviews - array of objects
-*/
+postSchema.methods.calculateAvgRating = function() {
+  let ratingsTotal = 0;
+  if (this.reviews.length) {
+    this.reviews.forEach(review => {
+      ratingsTotal += review.rating;
+    });
+    this.avgRating = Math.round((ratingsTotal / this.reviews.length) * 10) / 10;
+  } else {
+    this.avgRating = ratingsTotal;
+  }
+  const floorRating = Math.floor(this.avgRating);
+  this.save();
+  return floorRating;
+}
+
+postSchema.plugin(mongoosePaginate);
+
+module.exports = mongoose.model('Post', postSchema);
