@@ -1,7 +1,9 @@
 const Review = require('../models/review');
 const User = require('../models/user');
+const Post = require('../models/post');
+const { cloudinary } = require('../cloudinary');
 
-module.exports = {
+const middleware = {
   asyncErrorHandler: (fn) =>
     (req, res, next) => {
       Promise.resolve(fn(req, res, next))
@@ -17,18 +19,69 @@ module.exports = {
   },
   isLoggedIn: (req, res, next) => {
     if (req.isAuthenticated()) return next();
-    req.session.console.error = 'You need to be logged in to do that!';
+    req.session.error = 'You need to be logged in to do that!';
     req.session.redirectTo = req.originalUrl;
     res.redirect('/login');
-  }
-  /*,
-  checkIfUserExists: async (req, res, next) => {
-    let userExists = await User.findOne({'email': req.body.email});
-    if(userExists) {
-      req.session.error = 'A user with the given email is already registered';
-      return res.redirect('back');
+  },
+  isAuthor: async (req, res, next) => {
+    const post = await Post.findById(req.params.id);
+    if (post.author.equals(req.user._id)) {
+      res.locals.post = post;
+      return next();
     }
-    next();
+    req.session.error = 'Access denied!';
+    res.redirect('back');
+  },
+  isValidPassword: async (req, res, next) => {
+    const { user } = await User.authenticate()(req.user.username, req.body.currentPassword);
+    if (user) {
+      // add user to res.locals
+      res.locals.user = user;
+      next();
+    } else {
+      middleware.deleteProfileImage(req);
+      req.session.error = 'Incorrect Current Password!';
+      return res.redirect('/profile');
+    }
+  },
+  changePassword: async (req, res, next) => {
+    const {
+      newPassword,
+      passwordConfirmation
+    } = req.body;
+
+    if (newPassword && !passwordConfirmation) {
+      middleware.deleteProfileImage(req);
+      req.session.error = 'Missing password confirmation!';
+      return res.redirect('/profile');
+    } else if (newPassword && passwordConfirmation) {
+      const { user } = res.locals;
+      if( newPassword === passwordConfirmation) {
+        await user.setPassword(newPassword);
+        next();
+      } else {
+        middleware.deleteProfileImage(req);
+        req.session.error = 'New Passwords Must Match!';
+        return res.redirect('/profile');
+      }
+    } else {
+      next();
+    }
+  },
+  deleteProfileImage: async req => {
+    if (req.file) await cloudinary.v2.uploader.destroy(req.file.public_id);
   }
-  */
+};
+
+module.exports = middleware;
+
+/*,
+checkIfUserExists: async (req, res, next) => {
+  let userExists = await User.findOne({'email': req.body.email});
+  if(userExists) {
+    req.session.error = 'A user with the given email is already registered';
+    return res.redirect('back');
+  }
+  next();
 }
+*/

@@ -31,6 +31,8 @@
   <% }); %>
 </div>
 <div id='map'></div>
+
+<% if(currentUser && post.author.equals(currentUser._id)) { %>
 <div class="">
   <a href="/posts/<%= post.id %>/edit">
     <button>Edit</button>
@@ -41,10 +43,12 @@
     <button>Delete</button>
   </form>
 </div>
+<% } %>
 
+<% if(currentUser) { %>
 <h2>Create a Review</h2>
 <form class="" action="/posts/<%= post.id %>/reviews" method="POST">
-  <textarea name="review[body] required"></textarea>
+  <textarea name="review[body]" required></textarea>
   <fieldset class="starability-basic">
     <legend>Rating:</legend>
     <button class="clear-rating" type="button">Clear Rating</button>
@@ -62,7 +66,11 @@
   </fieldset>
   <button>Submit</button>
 </form>
-<!-- display all reviews -->
+<% } else { %>
+  <h2><a href="/login?returnTo=true">Create a Review</a></h2>
+<% } %>
+
+<!-- Display all reviews -->
 <h3>Reviews</h3>
 <% post.reviews.forEach(function(review) { %>
   <div class="">
@@ -70,7 +78,9 @@
     <%= review.body %><br>
     Rating: <%= review.rating %>
   </div>
-  <% if(review.author.equals(currentUser._id)) { %>
+
+  <!-- Reviewer Form -->
+  <% if(currentUser && review.author.equals(currentUser._id)) { %>
   <div class="">
     <!-- Edit Form -->
     <button class="toggle-edit-form">Edit</button>
@@ -103,5 +113,6 @@
     </form>
   </div>
   <% }; %>
+  <!-- End of Edit & Delete Form -->
   <hr>
 <% }) %>

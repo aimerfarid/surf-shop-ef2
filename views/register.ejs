@@ -1,6 +1,6 @@
 <% layout('layouts/boilerplate') -%>
 
-<form class="" action="/register" method="POST">
+<form class="" action="/register" method="POST" enctype="multipart/form-data">
   <div class="">
     <label for="username">Username:</label>
     <input id="username" type="text" name="username" placeholder="Username" value="<%= username %>" required>
